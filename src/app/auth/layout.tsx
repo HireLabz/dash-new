@@ -1,3 +1,5 @@
+import AppSidebar from "@/components/SideBar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -10,11 +12,13 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   }
   
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+    <SidebarProvider>
+      <AppSidebar userName={session.user?.name}  />
+      <main>
+        <SidebarTrigger />
         {children}
-      </div>
-    </div>
+      </main>
+    </SidebarProvider>
   );
 };
 

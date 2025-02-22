@@ -12,16 +12,8 @@ const AuthPage = () => {
   }, []);
   return (
     <div>
-      {session.data?.user?.email}
       <h1>Auth Page</h1>
       <p>This is the authentication page.</p>
-      <Button
-        variant="flat"
-        className="mt-4"
-        onPress={handleSignOut}
-      >
-        Sign Out
-      </Button>
     </div>
   );
 };
