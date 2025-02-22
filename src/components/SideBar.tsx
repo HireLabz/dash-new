@@ -1,11 +1,11 @@
 "use client";
 import {
   Bot,
+  Briefcase,
   Command,
   LayoutDashboardIcon,
   Settings,
   SquareFunction,
-  Workflow,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,6 +42,30 @@ const items: SidebarItem[] = [
     icon: LayoutDashboardIcon,
     isActive: false,
   },
+  {
+    title: "Jobs",
+    url: "/auth/jobs",
+    icon: Briefcase,
+    isActive: false,
+  },
+  {
+    title: "Applications",
+    url: "/auth/applications",
+    icon: SquareFunction,
+    isActive: false,
+  },
+  {
+    title: "Settings",
+    url: "/auth/settings",
+    icon: Settings,
+    isActive: false,
+  },
+  {
+    title: "Commands",
+    url: "/auth/commands",
+    icon: Command,
+    isActive: false,
+  }
 ];
 
 const AppSidebar = React.memo(
@@ -80,7 +104,7 @@ const AppSidebar = React.memo(
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+            <SidebarGroupLabel>Your jobs</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
