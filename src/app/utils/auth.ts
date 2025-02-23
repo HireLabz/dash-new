@@ -19,7 +19,7 @@ export const authOptions = {
       profile?: Profile;
       email?: { verificationRequest?: boolean };
     }): Promise<boolean> {
-      const allowedEmails = ["dacs2012@gmail.com", "itamardprf@gmail.com"];
+      const allowedEmails = ["dacs2012@gmail.com", "itamardprf@gmail.com", "2brandonh@gmail.com"];
       return allowedEmails.includes(email?.verificationRequest ? "" : (user.email ?? "")) || false;
     },
   },
