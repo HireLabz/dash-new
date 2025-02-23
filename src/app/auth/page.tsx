@@ -11,6 +11,7 @@ import {
   Pie,
   Cell,
   Label,
+  YAxis,
 } from "recharts";
 import {
   ChartConfig,
@@ -23,59 +24,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CopyIcon } from "lucide-react";
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "#2563eb",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "#60a5fa",
-  },
-} satisfies ChartConfig;
-
-const barChartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
-
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 190, fill: "var(--color-other)" },
-];
-
-const pieChartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  chrome: {
-    label: "Chrome",
-    color: "hsl(var(--chart-1))",
-  },
-  safari: {
-    label: "Safari",
-    color: "hsl(var(--chart-2))",
-  },
-  firefox: {
-    label: "Firefox",
-    color: "hsl(var(--chart-3))",
-  },
-  edge: {
-    label: "Edge",
-    color: "hsl(var(--chart-4))",
-  },
-  other: {
-    label: "Other",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig;
+interface Applicant {
+  id: number;
+  name: string;
+  score?: number;
+}
 
 interface Job {
   id: number;
@@ -84,27 +37,73 @@ interface Job {
   job_description: string;
   section_description: string;
   status: boolean;
-  // The applicants field is returned as an array if you have a foreign key relationship set up.
-  applicants: Array<{
-    id: number;
-    name: string;
-    score?: number;
-  }>;
+  applicants: Applicant[];
 }
+
+interface Interview {
+  id: number;
+  created_at: string;
+  applicant_id: number;
+  transcript: string;
+  overall_rating: number; // Assuming 1–5 scale
+}
+
+interface Analysis {
+  id: number;
+  created_at: string;
+  skill_name: string;
+  skill_score: number; // e.g. 1–10 scale
+  skill_reasoning: string;
+  interview_id: number; // foreign key to interviews
+}
+
+/** Example Chart Configs */
+const applicantsBarConfig = {
+  applicantsCount: {
+    label: "Applicants",
+    color: "#2563eb",
+  },
+} satisfies ChartConfig;
+
+const jobStatusPieConfig = {
+  active: {
+    label: "Active Jobs",
+    color: "hsl(var(--chart-2))",
+  },
+  inactive: {
+    label: "Inactive Jobs",
+    color: "hsl(var(--chart-3))",
+  },
+} satisfies ChartConfig;
 
 const Dashboard = () => {
   const session = useSession();
+
+  // -----------------------------
+  // State: Jobs
+  // -----------------------------
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [jobsError, setJobsError] = useState<string | null>(null);
 
-  // Fetch jobs along with their applicants from Supabase
+  // -----------------------------
+  // State: Interviews & Analysis
+  // -----------------------------
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [analysis, setAnalysis] = useState<Analysis[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  // -----------------------------
+  // Fetch: Jobs
+  // -----------------------------
   const fetchJobs = async () => {
     setJobsLoading(true);
     const { data, error } = await supabase
       .from("jobs")
       .select("*, applicants(*)")
       .order("id", { ascending: true });
+
     if (error) {
       console.error("Error fetching jobs:", error);
       setJobsError("Error fetching jobs");
@@ -114,41 +113,137 @@ const Dashboard = () => {
     setJobsLoading(false);
   };
 
+  // -----------------------------
+  // Fetch: Interviews & Analysis
+  // -----------------------------
+  const fetchInterviewsAndAnalysis = async () => {
+    setDataLoading(true);
+
+    // 1) Interviews
+    const { data: interviewsData, error: interviewsError } = await supabase
+      .from("interviews")
+      .select("*");
+
+    // 2) Analysis
+    const { data: analysisData, error: analysisError } = await supabase
+      .from("analysis")
+      .select("*");
+
+    if (interviewsError) {
+      console.error("Error fetching interviews:", interviewsError);
+      setDataError("Error fetching interviews");
+    } else if (analysisError) {
+      console.error("Error fetching analysis:", analysisError);
+      setDataError("Error fetching analysis");
+    } else {
+      setInterviews(interviewsData as Interview[]);
+      setAnalysis(analysisData as Analysis[]);
+    }
+    setDataLoading(false);
+  };
+
+  // -----------------------------
+  // useEffect
+  // -----------------------------
   useEffect(() => {
     fetchJobs();
-    // Optionally, add real-time subscription for jobs/applicants changes.
+    fetchInterviewsAndAnalysis();
   }, []);
 
-  const totalVisitors = useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  // -----------------------------
+  // Chart Data: Applicants per Job
+  // -----------------------------
+  const applicantsBarData = useMemo(() => {
+    return jobs.map((job) => ({
+      jobName: job.job_name,
+      applicantsCount: job.applicants?.length || 0,
+    }));
+  }, [jobs]);
 
+  // -----------------------------
+  // Chart Data: Active vs Inactive
+  // -----------------------------
+  const jobStatusPieData = useMemo(() => {
+    const activeJobs = jobs.filter((j) => j.status).length;
+    const inactiveJobs = jobs.length - activeJobs;
+    return [
+      { name: "Active", value: activeJobs, fill: "hsl(var(--chart-2))" },
+      { name: "Inactive", value: inactiveJobs, fill: "hsl(var(--chart-3))" },
+    ];
+  }, [jobs]);
+
+  // -----------------------------
+  // Average (Normalized) Rating
+  // Example: If overall_rating is 1–5,
+  // then normalized = (avgRating / 5) * 100
+  // -----------------------------
+  const averageRating = useMemo(() => {
+    if (!interviews.length) return 0;
+    const sum = interviews.reduce(
+      (acc, curr) => acc + (curr.overall_rating || 0),
+      0
+    );
+    return sum / interviews.length;
+  }, [interviews]);
+
+  const normalizedRating = useMemo(() => {
+    // If the scale is 1–5
+    return (averageRating / 100) * 100;
+  }, [averageRating]);
+
+  // -----------------------------
+  // UI
+  // -----------------------------
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Applicants Dashboard</h1>
       </header>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Bar Chart */}
-        <ChartContainer config={chartConfig} className="h-[200px] w-full">
-          <BarChart data={barChartData}>
+
+      {/* 
+        1) Show new "Average Overall Rating" 
+           You can style it however you'd like
+      */}
+      <div className="flex gap-4 flex-wrap">
+        <div className="p-4 bg-white rounded-md shadow-md">
+          <p className="text-sm text-gray-500">Average Rating (1-5)</p>
+          <p className="text-2xl font-bold">{averageRating.toFixed(2)}</p>
+        </div>
+        <div className="p-4 bg-white rounded-md shadow-md">
+          <p className="text-sm text-gray-500">Normalized (%)</p>
+          <p className="text-2xl font-bold">{normalizedRating.toFixed(2)}%</p>
+        </div>
+      </div>
+
+      {/* 2) Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {/* Bar Chart: Applicants per Job */}
+        <ChartContainer
+          config={applicantsBarConfig}
+          className="h-[300px] w-full"
+        >
+          <BarChart data={applicantsBarData}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="jobName"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
             />
+            <YAxis allowDecimals={false} />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-            <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+            <Bar
+              dataKey="applicantsCount"
+              fill="var(--color-applicantsCount)"
+              radius={4}
+            />
           </BarChart>
         </ChartContainer>
-        {/* Pie Chart */}
+
+        {/* Pie Chart: Active vs Inactive Jobs */}
         <ChartContainer
-          config={pieChartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          config={jobStatusPieConfig}
+          className="mx-auto aspect-square max-h-[300px]"
         >
           <PieChart>
             <ChartTooltip
@@ -156,35 +251,36 @@ const Dashboard = () => {
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
+              data={jobStatusPieData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={70}
               strokeWidth={5}
             >
               <Label
                 content={({ viewBox }) => {
                   if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    const { cx, cy } = viewBox;
                     return (
                       <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
+                        x={cx}
+                        y={cy}
                         textAnchor="middle"
                         dominantBaseline="middle"
                       >
                         <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          x={cx}
+                          y={cy}
+                          className="fill-foreground text-2xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {jobs.length}
                         </tspan>
                         <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          x={cx}
+                          y={(cy || 0) + 20}
+                          className="fill-muted-foreground text-sm"
                         >
-                          Visitors
+                          Total Jobs
                         </tspan>
                       </text>
                     );
@@ -192,7 +288,7 @@ const Dashboard = () => {
                   return null;
                 }}
               />
-              {chartData.map((entry, index) => (
+              {jobStatusPieData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
             </Pie>
@@ -200,7 +296,42 @@ const Dashboard = () => {
         </ChartContainer>
       </div>
 
-      {/* Jobs Cards */}
+      {/* 4) Display Analysis Data */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-2">Analysis Data</h2>
+        {dataLoading && <p>Loading analysis...</p>}
+        {dataError && <p>{dataError}</p>}
+
+        {!dataLoading && !dataError && analysis.length === 0 && (
+          <p>No analysis data found.</p>
+        )}
+
+        {!dataLoading && !dataError && analysis.length > 0 && (
+          <div className="overflow-auto">
+            <table className="min-w-full bg-white border border-gray-200 rounded-md">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-100">
+                  <th className="p-2 text-left">Skill Name</th>
+                  <th className="p-2 text-left">Skill Score</th>
+                  <th className="p-2 text-left">Reasoning</th>
+                  <th className="p-2 text-left">Interview ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.map((item) => (
+                  <tr key={item.id} className="border-b border-gray-100">
+                    <td className="p-2">{item.skill_name}</td>
+                    <td className="p-2">{item.skill_score}</td>
+                    <td className="p-2">{item.skill_reasoning}</td>
+                    <td className="p-2">{item.interview_id}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {/* 3) Existing Cards for Jobs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         {jobsLoading && <p>Loading jobs...</p>}
         {jobsError && <p>{jobsError}</p>}
