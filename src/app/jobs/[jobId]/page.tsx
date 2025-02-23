@@ -83,19 +83,6 @@ export default function JobForm() {
         resumeUrl = publicUrl;
       }
 
-      // Create query parameters from form data
-      const paramsObj = {
-        job_id: jobId,
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        resume_url: resumeUrl,
-        linkedin_url: linkedin,
-        portfolio_url: portfolio,
-        github_url: github,
-        phoneNumber: phoneNumber,
-      };
-
       const response = await fetch(
         `https://23a1-142-154-212-250.ngrok-free.app/api/applications`,
         {

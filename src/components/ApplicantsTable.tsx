@@ -14,6 +14,7 @@ import { PostgrestError } from "@supabase/supabase-js";
 import { FileIcon, ExternalLinkIcon, FilterIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
+import InterviewInfoModal from "./InterviewInfoModal";
 
 interface Applicant {
   id: number;
@@ -320,10 +321,7 @@ const ApplicantsTable = () => {
               )}
               {columnsVisibility.interviewData && (
                 <TableCell>
-                  {/* Placeholder for interview data */}
-                  <Button variant="ghost" size="sm" disabled={applicant.status !== "interviewed"}>
-                    View Interview Data
-                  </Button>
+                  <InterviewInfoModal applicantId={applicant.id} isDisabled={applicant.status !== 'interviewed'} />
                 </TableCell>
               )}
               {columnsVisibility.appliedDate && (
