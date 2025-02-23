@@ -13,7 +13,7 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   
   return (
     <SidebarProvider>
-      <AppSidebar userName={session.user?.name}  />
+      <AppSidebar userName={session.user?.name} profilePicture={session.user?.image} />
       <main className="w-full min-h-screen bg-gray-50 flex flex-col">
         <SidebarTrigger />
         {children}

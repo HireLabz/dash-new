@@ -44,7 +44,6 @@ const InterviewInfoModal = ({
         .eq("applicant_id", applicantId)
         .single();
 
-      console.log("Interview Data:", data);
       if (error) {
         throw error;
       }
@@ -77,7 +76,6 @@ const InterviewInfoModal = ({
   const chatMessages: ChatMessage[] = useMemo(() => {
     if (!transcript.trim()) return [];
     try {
-      console.log("Transcript:", transcript);
       return JSON.parse(transcript);
     } catch (e) {
       console.error("Error parsing transcript JSON:", e);

@@ -80,7 +80,6 @@ const ApplicantsTable = () => {
       )
       .order("created_at", { ascending: false });
 
-    console.log("Fetched applicants:", data);
 
     if (error) {
       setError(error);
@@ -148,7 +147,6 @@ const ApplicantsTable = () => {
     }
 
     const global = globalFilter.toLowerCase();
-    console.log("Global filter:", transcriptText);
     const matchGlobal =
       !global ||
       jobName.includes(global) ||

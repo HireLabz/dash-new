@@ -34,6 +34,7 @@ const NavUser = React.memo(function NavUser({
   const { user, handleSignOut } = useNavUser(initialUser);
   const { isMobile } = useSidebar();
 
+  console.log("NavUser", user);
   return (
     <SidebarMenu>
       <SidebarMenuItem>
