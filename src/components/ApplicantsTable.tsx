@@ -127,7 +127,8 @@ const filteredApplicants = applicants.filter((applicant) => {
         } else {
           transcriptText = String(transcriptJSON);
         }
-      } catch (e) {
+      } catch (error) {
+        console.error("Error parsing transcript JSON:", error);
         transcriptText = rawTranscript; // fallback to raw text if JSON parsing fails
       }
     } else {

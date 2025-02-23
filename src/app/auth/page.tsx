@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/react";
-import { useSession } from "next-auth/react";
 import {
   Bar,
   BarChart,
@@ -77,8 +76,6 @@ const jobStatusPieConfig = {
 } satisfies ChartConfig;
 
 const Dashboard = () => {
-  const session = useSession();
-
   // -----------------------------
   // State: Jobs
   // -----------------------------

@@ -56,6 +56,7 @@ const InterviewInfoModal = ({
       console.log("Transcript:", transcript);
       return JSON.parse(transcript);
     } catch (e) {
+      console.error("Error parsing transcript JSON:", e);
       return [];
     }
   }, [transcript]);

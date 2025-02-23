@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/sidebar";
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { NavUser } from "./NavUser";
 
 interface SidebarItem {
@@ -74,16 +73,8 @@ const AppSidebar = React.memo(
     profilePicture?: string | null;
     email?: string | null;
   }) => {
-    let pathname = usePathname();
 
-    React.useEffect(() => {
-      let activeItem = items.find((item) => item.url === pathname);
-      if (activeItem) {
-        setActiveItem(activeItem.title);
-      }
-    }, [pathname]);
-
-    const [activeItem, setActiveItem] = React.useState<string>("");
+    // Removed the effect and state tracking active item since they were unused.
 
     return (
       <Sidebar collapsible="icon">
@@ -128,6 +119,8 @@ const AppSidebar = React.memo(
   }
 );
 
+AppSidebar.displayName = "AppSidebar"; // Add a display name for debugging
+
 function NavigationLink({ item }: NavigationLinkProps) {
   return (
     <SidebarMenuItem key={item.title}>
@@ -140,4 +133,5 @@ function NavigationLink({ item }: NavigationLinkProps) {
     </SidebarMenuItem>
   );
 }
+
 export default AppSidebar;

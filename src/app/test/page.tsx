@@ -21,7 +21,6 @@ const TextPage = () => {
         throw new Error("Network response was not ok");
       }
 
-      const data = await response.json();
       setResponseMsg("Phone sent successfully!");
     } catch (error) {
       console.error("Error sending phone:", error);

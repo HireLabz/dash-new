@@ -41,9 +41,7 @@ void main() {
 }
 `;
 
-interface NovatrixProps {}
-
-export const Novatrix: React.FC<NovatrixProps> = () => {
+export const Novatrix: React.FC = () => {
   const ctnDom = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
