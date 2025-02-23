@@ -23,6 +23,11 @@ import {
   ModalFooter,
 } from "@heroui/react";
 import { Trash2Icon } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
 interface SectionTag {
   section: string;
@@ -149,7 +154,7 @@ const JobsTable = ({
     const section = job.section_description.toLowerCase();
     const statusText = job.status ? "active" : "inactive";
     const global = globalFilter.toLowerCase();
-  
+
     const matchGlobal =
       !global ||
       name.includes(global) ||
@@ -157,8 +162,9 @@ const JobsTable = ({
       section.includes(global) ||
       statusText.includes(global);
     const matchName = name.includes(jobNameFilter.toLowerCase());
-    const matchStatus = !statusFilter || statusText === statusFilter.toLowerCase();
-  
+    const matchStatus =
+      !statusFilter || statusText === statusFilter.toLowerCase();
+
     return matchGlobal && matchName && matchStatus;
   });
 
@@ -183,17 +189,19 @@ const JobsTable = ({
               <TableCell>{job.job_description}</TableCell>
               <TableCell>{job.section_description}</TableCell>
               <TableCell>
-                {/* Render tags if they exist */}
                 {job.sections && job.sections.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {job.sections.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full"
-                        title={tag.context}
-                      >
-                        {tag.section}
-                      </span>
+                      <Tooltip key={index}>
+                        <TooltipTrigger asChild>
+                          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                            {tag.section}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-white text-gray-700 p-2 rounded-lg shadow-lg">
+                          {tag.context}
+                        </TooltipContent>
+                      </Tooltip>
                     ))}
                   </div>
                 )}
