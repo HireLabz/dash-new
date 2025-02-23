@@ -1,10 +1,9 @@
 "use client";
-
-import { PlaneIcon } from "lucide-react";
+import { PlaneIcon, Loader2, } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useParams } from "next/navigation";
-import { Card, CardBody, CardHeader } from "@heroui/react";
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/react";
 
 interface Job {
   id: number;
@@ -15,12 +14,16 @@ interface Job {
 }
 
 export default function JobForm() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [resume, setResume] = useState<File | null>(null);
   const [linkedin, setLinkedin] = useState("");
   const [portfolio, setPortfolio] = useState("");
   const [github, setGithub] = useState("");
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const params = useParams();
   const jobId = params.jobId as string;
@@ -51,6 +54,7 @@ export default function JobForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitLoading(true);
 
     try {
       let resumeUrl = "";
@@ -91,21 +95,42 @@ export default function JobForm() {
 
       if (insertError) throw insertError;
 
-      // Show success message or redirect
-      alert("Application submitted successfully!");
+      setSubmitted(true);
     } catch (err) {
       console.error("Error submitting application:", err);
       alert("Error submitting application. Please try again.");
+    } finally {
+      setSubmitLoading(false);
     }
   }
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading)
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="animate-spin mr-2" /> Retrieving job details...
+      </div>
+    );
   if (error) return <div className="p-8 text-red-500">{error}</div>;
   if (!job) return <div className="p-8">Job not found</div>;
+  if (submitted)
+    return (
+      <div className="container mx-auto py-8">
+        <Card shadow="none" className="max-w-4xl mx-auto bg-transparent">
+          <CardHeader>
+            <h1 className="text-3xl font-bold">Application Submitted!</h1>
+          </CardHeader>
+          <CardBody>
+            <p className="text-gray-700">
+              Thank you for applying. We will get back to you soon.
+            </p>
+          </CardBody>
+        </Card>
+      </div>
+    );
 
   return (
     <div className="container mx-auto py-8">
-      <Card className="max-w-4xl mx-auto">
+      <Card shadow="none" className="max-w-4xl mx-auto bg-transparent">
         <CardHeader>
           <div className="flex flex-col justify-between">
             <h1 className="text-3xl font-bold">{job.job_name}</h1>
@@ -123,6 +148,32 @@ export default function JobForm() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-gray-700 font-bold mb-2">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="John"
+                    disabled={submitLoading}
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Doe"
+                    disabled={submitLoading}
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">
                     Resume
                   </label>
                   <input
@@ -131,6 +182,7 @@ export default function JobForm() {
                     onChange={(e) =>
                       e.target.files && setResume(e.target.files[0])
                     }
+                    disabled={submitLoading}
                     className="w-full px-3 py-2 border rounded"
                   />
                 </div>
@@ -143,6 +195,7 @@ export default function JobForm() {
                     value={linkedin}
                     onChange={(e) => setLinkedin(e.target.value)}
                     placeholder="https://linkedin.com/in/yourprofile"
+                    disabled={submitLoading}
                     className="w-full px-3 py-2 border rounded"
                   />
                 </div>
@@ -155,6 +208,7 @@ export default function JobForm() {
                     value={portfolio}
                     onChange={(e) => setPortfolio(e.target.value)}
                     placeholder="https://yourportfolio.com"
+                    disabled={submitLoading}
                     className="w-full px-3 py-2 border rounded"
                   />
                 </div>
@@ -167,6 +221,7 @@ export default function JobForm() {
                     value={github}
                     onChange={(e) => setGithub(e.target.value)}
                     placeholder="https://github.com/yourusername"
+                    disabled={submitLoading}
                     className="w-full px-3 py-2 border rounded"
                   />
                 </div>
@@ -178,19 +233,45 @@ export default function JobForm() {
                 <input
                   type="tel"
                   placeholder="123-456-7890"
+                  disabled={submitLoading}
                   className="w-full px-3 py-2 border rounded"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                disabled={submitLoading}
+                className="w-full flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
               >
-                <PlaneIcon className="mr-2" />
-                Submit Application
+                {submitLoading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <PlaneIcon className="mr-2" />
+                    Submit Application
+                  </>
+                )}
               </button>
             </form>
           )}
         </CardBody>
+        <CardFooter>
+          <div className="flex flex-col">
+            <p className="text-gray-600">
+              By submitting your application, you agree to our{" "}
+              <a href="/terms" className="text-blue-500 underline">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="text-blue-500 underline">
+                Privacy Policy
+              </a>
+            </p>
+            <p className="text-gray-600">Powerd by HireLabz</p>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );
