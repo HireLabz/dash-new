@@ -28,6 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
+import { toast } from "sonner";
 
 interface SectionTag {
   section: string;
@@ -126,7 +127,7 @@ const JobsTable = ({
   const copyJobLink = (jobId: number) => {
     const link = `${window.location.origin}/jobs/${jobId}`;
     navigator.clipboard.writeText(link);
-    alert("Link copied to clipboard!");
+    toast("Copied into clipboard", {});
   };
 
   const updateJobStatus = async (job: Job, newStatus: boolean) => {

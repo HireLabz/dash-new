@@ -4,6 +4,7 @@ import "./globals.css";
 import { HeroUIProvider } from "@heroui/react";
 import SessionProvider from "./providers/NextAuthProvider";
 import { getServerSession } from "next-auth";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,10 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider session={session}>
-          <HeroUIProvider>{children}</HeroUIProvider>
+          <HeroUIProvider>
+            {children}
+            <Toaster />
+          </HeroUIProvider>
         </SessionProvider>
       </body>
     </html>
