@@ -149,7 +149,7 @@ const JobsTable = ({
     const section = job.section_description.toLowerCase();
     const statusText = job.status ? "active" : "inactive";
     const global = globalFilter.toLowerCase();
-
+  
     const matchGlobal =
       !global ||
       name.includes(global) ||
@@ -157,8 +157,8 @@ const JobsTable = ({
       section.includes(global) ||
       statusText.includes(global);
     const matchName = name.includes(jobNameFilter.toLowerCase());
-    const matchStatus = statusText.includes(statusFilter.toLowerCase());
-
+    const matchStatus = !statusFilter || statusText === statusFilter.toLowerCase();
+  
     return matchGlobal && matchName && matchStatus;
   });
 

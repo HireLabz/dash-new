@@ -27,7 +27,6 @@ const AddJob = () => {
   const [selectedTags, setSelectedTags] = useState<SectionTag[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [sectionContext, setSectionContext] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
 
   const addTag = (tag: SectionTag) => {
     setSelectedTags([...selectedTags, tag]);
@@ -168,8 +167,6 @@ const AddJob = () => {
                       placeholder="Add a section tag"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
-                      onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
