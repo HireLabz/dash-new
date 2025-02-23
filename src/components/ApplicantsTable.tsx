@@ -30,6 +30,9 @@ interface Applicant {
   job: {
     job_name: string;
   };
+  interview: {
+    transcript: string;
+  };
 }
 
 const ApplicantsTable = () => {
@@ -65,10 +68,13 @@ const ApplicantsTable = () => {
       .select(
         `
         *,
-        job:jobs(*)
+        job:jobs(*),
+        interview:interviews(transcript)
       `
       )
       .order("created_at", { ascending: false });
+
+      console.log("Fetched applicants:", data);
 
     if (error) {
       setError(error);
@@ -102,26 +108,50 @@ const ApplicantsTable = () => {
   if (error) return <div>Error loading applications.</div>;
 
   // Apply filters
-  const filteredApplicants = applicants.filter((applicant) => {
-    const jobName = applicant.job?.job_name.toLowerCase() || "";
-    const candidateName =
-      `${applicant.first_name} ${applicant.last_name}`.toLowerCase();
-    const statusText = applicant.status.toLowerCase();
-    const global = globalFilter.toLowerCase();
+  // Inside the filteredApplicants filter:
+const filteredApplicants = applicants.filter((applicant) => {
+  const jobName = applicant.job?.job_name.toLowerCase() || "";
+  const candidateName = `${applicant.first_name} ${applicant.last_name}`.toLowerCase();
+  const statusText = applicant.status.toLowerCase();
 
-    const matchGlobal =
-      !global ||
-      jobName.includes(global) ||
-      candidateName.includes(global) ||
-      statusText.includes(global);
-    const matchJob = jobName.includes(jobFilter.toLowerCase());
-    const matchCandidate = candidateName.includes(
-      candidateFilter.toLowerCase()
-    );
-    const matchStatus = statusText.includes(statusFilter.toLowerCase());
+  // Extract transcript text:
+  let transcriptText = "";
+  if (applicant.interview?.transcript) {
+    const rawTranscript = applicant.interview.transcript.trim();
+    // If transcript appears to be JSON (starts with '['), try parsing it:
+    if (rawTranscript.startsWith("[")) {
+      try {
+        const transcriptJSON = JSON.parse(rawTranscript);
+        if (Array.isArray(transcriptJSON)) {
+          transcriptText = transcriptJSON.map((entry: { message: string }) => entry.message).join(" ");
+        } else {
+          transcriptText = String(transcriptJSON);
+        }
+      } catch (e) {
+        transcriptText = rawTranscript; // fallback to raw text if JSON parsing fails
+      }
+    } else {
+      // Treat it as a plain text large string
+      transcriptText = rawTranscript;
+    }
+    transcriptText = transcriptText.toLowerCase();
+  }
 
-    return matchGlobal && matchJob && matchCandidate && matchStatus;
-  });
+  const global = globalFilter.toLowerCase();
+  console.log("Global filter:", transcriptText);
+  const matchGlobal =
+    !global ||
+    jobName.includes(global) ||
+    candidateName.includes(global) ||
+    statusText.includes(global) ||
+    transcriptText.includes(global);
+
+  const matchJob = jobName.includes(jobFilter.toLowerCase());
+  const matchCandidate = candidateName.includes(candidateFilter.toLowerCase());
+  const matchStatus = statusText.includes(statusFilter.toLowerCase());
+
+  return matchGlobal && matchJob && matchCandidate && matchStatus;
+});
 
   return (
     <>
@@ -321,7 +351,10 @@ const ApplicantsTable = () => {
               )}
               {columnsVisibility.interviewData && (
                 <TableCell>
-                  <InterviewInfoModal applicantId={applicant.id} isDisabled={applicant.status !== 'interviewed'} />
+                  <InterviewInfoModal
+                    applicantId={applicant.id}
+                    isDisabled={applicant.status !== "interviewed"}
+                  />
                 </TableCell>
               )}
               {columnsVisibility.appliedDate && (
