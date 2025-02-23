@@ -59,9 +59,17 @@ const AddJob = () => {
       formData.get("section_description")?.toString() || "";
     const status = statusStr === "active";
 
-    const { error } = await supabase.from("jobs").insert([
-      { job_name, job_description, status, sections: selectedTags, section_description },
-    ]);
+    const { error } = await supabase
+      .from("jobs")
+      .insert([
+        {
+          job_name,
+          job_description,
+          status,
+          sections: selectedTags,
+          section_description,
+        },
+      ]);
 
     if (error) {
       console.error("Error adding job:", error);
@@ -112,7 +120,10 @@ const AddJob = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-2 mb-4">
-                  <label htmlFor="jobDescription" className="text-sm font-medium">
+                  <label
+                    htmlFor="jobDescription"
+                    className="text-sm font-medium"
+                  >
                     Job Description
                   </label>
                   <textarea
@@ -175,7 +186,11 @@ const AddJob = () => {
                     onChange={(e) => setSectionContext(e.target.value)}
                     className="border rounded p-2 w-full mt-2"
                   />
-                  <Button variant="default" onClick={addCustomTag}>
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={addCustomTag}
+                  >
                     Add Tag
                   </Button>
                   {/* Display selected tags */}
