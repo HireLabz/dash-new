@@ -174,19 +174,23 @@ const Dashboard = () => {
   // Example: If overall_rating is 1–5,
   // then normalized = (avgRating / 5) * 100
   // -----------------------------
-  const averageRating = useMemo(() => {
-    if (!interviews.length) return 0;
-    const sum = interviews.reduce(
-      (acc, curr) => acc + (curr.overall_rating || 0),
-      0
-    );
-    return sum / interviews.length;
-  }, [interviews]);
+  // -----------------------------
+// Average (Normalized) Rating
+// -----------------------------
+const rawAverageRating = useMemo(() => {
+  if (!interviews.length) return 0;
+  const sum = interviews.reduce(
+    (acc, curr) => acc + (curr.overall_rating || 0),
+    0
+  );
+  return sum / interviews.length;
+}, [interviews]);
 
-  const normalizedRating = useMemo(() => {
-    // If the scale is 1–5
-    return (averageRating / 100) * 100;
-  }, [averageRating]);
+// Convert the raw average from a 1–100 scale to a 1–5 scale
+const averageRating = useMemo(() => rawAverageRating / 20, [rawAverageRating]);
+
+// Normalized rating is already on a 1–100 scale
+const normalizedRating = useMemo(() => rawAverageRating, [rawAverageRating]);
 
   // -----------------------------
   // UI
