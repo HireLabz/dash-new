@@ -17,6 +17,12 @@ type ChatMessage = {
   time_in_call_secs: string; // added timestamp property
 };
 
+interface Score {
+  skill_name: string;
+  skill_score: number;
+  skill_reasoning: string;
+}
+
 const InterviewInfoModal = ({
   applicantId,
   isDisabled,
@@ -26,23 +32,38 @@ const InterviewInfoModal = ({
 }) => {
   const [transcript, setTranscript] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
+  const [scores, setScores] = useState<Score[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleButtonClick = async () => {
     try {
+      // Query interview data
       const { data, error } = await supabase
         .from("interviews")
         .select("*")
         .eq("applicant_id", applicantId)
         .single();
 
-      console.log("Data:", data);
+      console.log("Interview Data:", data);
       if (error) {
         throw error;
       }
 
       setTranscript(data.transcript);
       setSummary(data.summary);
+
+      // Query analysis scores based on the interview id (assuming data.id is the interview id)
+      const { data: analysisData, error: analysisError } = await supabase
+        .from("analysis")
+        .select("*")
+        .eq("interview_id", data.id);
+
+      if (analysisError) {
+        console.error("Error fetching analysis:", analysisError);
+      } else {
+        setScores(analysisData || []);
+      }
+
       setIsOpen(true);
     } catch (error) {
       console.error(error);
@@ -51,7 +72,10 @@ const InterviewInfoModal = ({
   };
 
   // Parse transcript JSON into an array of chat messages
+  // ...
+  // Parse transcript JSON into an array of chat messages
   const chatMessages: ChatMessage[] = useMemo(() => {
+    if (!transcript.trim()) return [];
     try {
       console.log("Transcript:", transcript);
       return JSON.parse(transcript);
@@ -60,6 +84,7 @@ const InterviewInfoModal = ({
       return [];
     }
   }, [transcript]);
+  // ...
 
   return (
     <>
@@ -110,6 +135,22 @@ const InterviewInfoModal = ({
             <h2 className="text-lg font-semibold">Summary</h2>
             <p className="text-gray-800 whitespace-pre-wrap">{summary}</p>
           </div>
+          {scores.length > 0 && (
+            <div className="mt-4">
+              <h2 className="text-lg font-semibold">Scores</h2>
+              <div className="space-y-2">
+                {scores.map((score, idx) => (
+                  <div key={idx} className="p-2 border rounded">
+                    <p className="font-semibold">{score.skill_name}</p>
+                    <p>Score: {score.skill_score}</p>
+                    <p className="text-sm text-gray-700">
+                      Reasoning: {score.skill_reasoning}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <SheetFooter className="flex justify-start mt-4">
             <SheetClose asChild>
               <Button>Close</Button>
