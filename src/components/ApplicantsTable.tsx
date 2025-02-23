@@ -24,7 +24,7 @@ interface Applicant {
   linkedin_url: string | null;
   portfolio_url: string | null;
   github_url: string | null;
-  status: "pending" | "reviewing" | "accepted" | "rejected";
+  status: "pending" | "reviewing" | "accepted" | "rejected" | "interviewed";
   created_at: string;
   job: {
     job_name: string;
@@ -47,6 +47,7 @@ const ApplicantsTable = () => {
     job: true,
     candidate: true,
     resume: true,
+    interviewData: true,
     links: true,
     status: true,
     appliedDate: true,
@@ -102,7 +103,8 @@ const ApplicantsTable = () => {
   // Apply filters
   const filteredApplicants = applicants.filter((applicant) => {
     const jobName = applicant.job?.job_name.toLowerCase() || "";
-    const candidateName = `${applicant.first_name} ${applicant.last_name}`.toLowerCase();
+    const candidateName =
+      `${applicant.first_name} ${applicant.last_name}`.toLowerCase();
     const statusText = applicant.status.toLowerCase();
     const global = globalFilter.toLowerCase();
 
@@ -112,7 +114,9 @@ const ApplicantsTable = () => {
       candidateName.includes(global) ||
       statusText.includes(global);
     const matchJob = jobName.includes(jobFilter.toLowerCase());
-    const matchCandidate = candidateName.includes(candidateFilter.toLowerCase());
+    const matchCandidate = candidateName.includes(
+      candidateFilter.toLowerCase()
+    );
     const matchStatus = statusText.includes(statusFilter.toLowerCase());
 
     return matchGlobal && matchJob && matchCandidate && matchStatus;
@@ -176,6 +180,9 @@ const ApplicantsTable = () => {
             {columnsVisibility.resume && <TableHead>Resume</TableHead>}
             {columnsVisibility.links && <TableHead>Links</TableHead>}
             {columnsVisibility.status && <TableHead>Status</TableHead>}
+            {columnsVisibility.interviewData && (
+              <TableHead>Interview Data</TableHead>
+            )}
             {columnsVisibility.appliedDate && (
               <TableHead>Applied Date</TableHead>
             )}
@@ -302,12 +309,21 @@ const ApplicantsTable = () => {
                         reviewing: "bg-blue-100 text-blue-800",
                         accepted: "bg-green-100 text-green-800",
                         rejected: "bg-red-100 text-red-800",
+                        interviewed: "bg-purple-100 text-purple-800",
                       }[applicant.status]
                     }`}
                   >
                     {applicant.status.charAt(0).toUpperCase() +
                       applicant.status.slice(1)}
                   </span>
+                </TableCell>
+              )}
+              {columnsVisibility.interviewData && (
+                <TableCell>
+                  {/* Placeholder for interview data */}
+                  <Button variant="ghost" size="sm" disabled={applicant.status !== "interviewed"}>
+                    View Interview Data
+                  </Button>
                 </TableCell>
               )}
               {columnsVisibility.appliedDate && (
