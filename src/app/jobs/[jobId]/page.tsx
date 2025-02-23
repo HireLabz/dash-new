@@ -1,5 +1,5 @@
 "use client";
-import { PlaneIcon, Loader2, } from "lucide-react";
+import { PlaneIcon, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useParams } from "next/navigation";
@@ -16,6 +16,7 @@ interface Job {
 export default function JobForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [resume, setResume] = useState<File | null>(null);
   const [linkedin, setLinkedin] = useState("");
   const [portfolio, setPortfolio] = useState("");
@@ -64,7 +65,7 @@ export default function JobForm() {
         const fileName = `${Date.now()}.${fileExt}`;
 
         // Upload file
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("applicants resume")
           .upload(fileName, resume);
 
@@ -81,19 +82,45 @@ export default function JobForm() {
         resumeUrl = publicUrl;
       }
 
-      // Insert application into the applicants table with the public URL
-      const { error: insertError } = await supabase.from("applicants").insert([
-        {
-          job_id: jobId,
-          resume_url: resumeUrl, // Store the public URL instead of just the filename
-          linkedin_url: linkedin,
-          portfolio_url: portfolio,
-          github_url: github,
-          status: "pending",
-        },
-      ]);
+      // Create query parameters from form data
+      const paramsObj = {
+        job_id: jobId,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        resume_url: resumeUrl,
+        linkedin_url: linkedin,
+        portfolio_url: portfolio,
+        github_url: github,
+      };
 
-      if (insertError) throw insertError;
+      const queryParams = new URLSearchParams(
+        paramsObj as Record<string, string>
+      ).toString();
+
+      const response = await fetch(
+        `https://23a1-142-154-212-250.ngrok-free.app/api/applications`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            job_id: jobId,
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            resume_url: resumeUrl,
+            linkedin_url: linkedin,
+            portfolio_url: portfolio,
+            github_url: github,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to submit application");
+      }
 
       setSubmitted(true);
     } catch (err) {
@@ -168,6 +195,20 @@ export default function JobForm() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Doe"
+                    disabled={submitLoading}
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+                {/* email */}
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="john@doe.com"
                     disabled={submitLoading}
                     className="w-full px-3 py-2 border rounded"
                   />
