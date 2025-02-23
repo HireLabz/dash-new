@@ -1,7 +1,7 @@
 "use client";
-import React from "react";
-import { Button, Card } from "@heroui/react";
-import { signOut, useSession } from "next-auth/react";
+import React, { useEffect, useState, useMemo } from "react";
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/react";
+import { useSession } from "next-auth/react";
 import {
   Bar,
   BarChart,
@@ -9,8 +9,6 @@ import {
   XAxis,
   PieChart,
   Pie,
-  Tooltip,
-  Legend,
   Cell,
   Label,
 } from "recharts";
@@ -20,6 +18,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { CopyIcon } from "lucide-react";
 
 const chartConfig = {
   desktop: {
@@ -31,33 +33,6 @@ const chartConfig = {
     color: "#60a5fa",
   },
 } satisfies ChartConfig;
-
-const fakeJobs = [
-  {
-    id: "1",
-    title: "Frontend Developer",
-    applicants: [
-      { id: "a1", name: "Alice Smith", score: 92 },
-      { id: "a2", name: "Bob Johnson", score: 88 },
-    ],
-  },
-  {
-    id: "2",
-    title: "Backend Developer",
-    applicants: [
-      { id: "a3", name: "Charlie Brown", score: 85 },
-      { id: "a4", name: "Diana Prince", score: 90 },
-    ],
-  },
-  {
-    id: "3",
-    title: "UI/UX Designer",
-    applicants: [
-      { id: "a5", name: "Emily Davis", score: 95 },
-      { id: "a6", name: "Frank Wilson", score: 80 },
-    ],
-  },
-];
 
 const barChartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -102,9 +77,49 @@ const pieChartConfig = {
   },
 } satisfies ChartConfig;
 
+interface Job {
+  id: number;
+  job_name: string;
+  job_department: string;
+  job_description: string;
+  section_description: string;
+  status: boolean;
+  // The applicants field is returned as an array if you have a foreign key relationship set up.
+  applicants: Array<{
+    id: number;
+    name: string;
+    score?: number;
+  }>;
+}
+
 const Dashboard = () => {
   const session = useSession();
-  const totalVisitors = React.useMemo(() => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsError, setJobsError] = useState<string | null>(null);
+
+  // Fetch jobs along with their applicants from Supabase
+  const fetchJobs = async () => {
+    setJobsLoading(true);
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*, applicants(*)")
+      .order("id", { ascending: true });
+    if (error) {
+      console.error("Error fetching jobs:", error);
+      setJobsError("Error fetching jobs");
+    } else {
+      setJobs(data as Job[]);
+    }
+    setJobsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchJobs();
+    // Optionally, add real-time subscription for jobs/applicants changes.
+  }, []);
+
+  const totalVisitors = useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
 
@@ -184,23 +199,59 @@ const Dashboard = () => {
           </PieChart>
         </ChartContainer>
       </div>
+
+      {/* Jobs Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        {fakeJobs.map((job) => (
-          <Card key={job.id} className="p-4 shadow rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">{job.title}</h2>
-            <div>
-              {job.applicants.map((applicant) => (
+        {jobsLoading && <p>Loading jobs...</p>}
+        {jobsError && <p>{jobsError}</p>}
+        {!jobsLoading &&
+          jobs.map((job) => (
+            <Card key={job.id} className="p-4 shadow rounded-lg">
+              <CardHeader className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">{job.job_name}</h2>
                 <div
-                  key={applicant.id}
-                  className="flex justify-between border-b last:border-0 py-2"
+                  className={`px-2 py-1 rounded-full text-sm ${
+                    job.status
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
                 >
-                  <span>{applicant.name}</span>
-                  <span className="font-medium">{applicant.score}</span>
+                  {job.status ? "Active" : "Inactive"}
                 </div>
-              ))}
-            </div>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardBody className="flex flex-col">
+                <p className="text-sm text-muted-foreground">
+                  {job.job_description}
+                </p>
+                <div className="mt-4">
+                  <p className="text-sm">
+                    Applicants: {job.applicants ? job.applicants.length : 0}
+                  </p>
+                </div>
+              </CardBody>
+              <CardFooter className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const link = `${window.location.origin}/jobs/${job.id}`;
+                    navigator.clipboard.writeText(link);
+                    toast.success("Job link copied to clipboard!");
+                  }}
+                >
+                  <CopyIcon className="mr-2" />
+                  Copy Job Link
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => alert("View Details clicked")}
+                >
+                  View Details
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
       </div>
     </div>
   );

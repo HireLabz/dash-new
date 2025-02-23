@@ -41,6 +41,7 @@ interface Job {
   job_description: string;
   section_description: string;
   status: boolean;
+  created_at: string;
   sections?: SectionTag[];
 }
 
@@ -59,6 +60,8 @@ const JobsTable = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<PostgrestError | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<Job | null>(null);
+  // state to track sorting for the "created" field
+  const [createdSort, setCreatedSort] = useState<"asc" | "desc">("asc");
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -145,6 +148,10 @@ const JobsTable = ({
     );
   };
 
+  const toggleCreatedSort = () => {
+    setCreatedSort((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
   if (loading) return <div>Loading jobs...</div>;
   if (error) return <div>Error loading jobs.</div>;
 
@@ -169,6 +176,16 @@ const JobsTable = ({
     return matchGlobal && matchName && matchStatus;
   });
 
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    if (createdSort === "asc") {
+      return dateA - dateB;
+    } else {
+      return dateB - dateA;
+    }
+  });
+
   return (
     <>
       <Table>
@@ -180,11 +197,22 @@ const JobsTable = ({
             <TableHead>Section Description</TableHead>
             <TableHead>Tags</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead
+              className="cursor-pointer select-none"
+              onClick={toggleCreatedSort}
+            >
+              Created{" "}
+              {createdSort === "asc" ? (
+                <span>&#9650;</span>
+              ) : (
+                <span>&#9660;</span>
+              )}
+            </TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredJobs.map((job) => (
+          {sortedJobs.map((job) => (
             <TableRow key={job.id}>
               <TableCell>{job.job_name}</TableCell>
               <TableCell>{job.job_description}</TableCell>
@@ -247,6 +275,7 @@ const JobsTable = ({
                   </PopoverContent>
                 </Popover>
               </TableCell>
+              <TableCell>{new Date(job.created_at).toLocaleString()}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
                   <Button

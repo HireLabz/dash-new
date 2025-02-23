@@ -52,10 +52,9 @@ const AddJob = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const job_name = formData.get("jobTitle")?.toString() || "";
+    const job_department = formData.get("jobDepartment")?.toString() || "";
     const job_description = formData.get("jobDescription")?.toString() || "";
     const statusStr = formData.get("status")?.toString() || "inactive";
-    const section_description =
-      formData.get("section_description")?.toString() || "";
     const status = statusStr === "active";
 
     const { error } = await supabase
@@ -63,10 +62,10 @@ const AddJob = () => {
       .insert([
         {
           job_name,
+          job_department,
           job_description,
           status,
           sections: selectedTags,
-          section_description,
         },
       ]);
 
@@ -119,6 +118,18 @@ const AddJob = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-2 mb-4">
+                  <label htmlFor="jobDepartment" className="text-sm font-medium">
+                    Job Department
+                  </label>
+                  <input
+                    type="text"
+                    id="jobDepartment"
+                    name="jobDepartment"
+                    className="border rounded p-2"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-2 mb-4">
                   <label
                     htmlFor="jobDescription"
                     className="text-sm font-medium"
@@ -145,18 +156,6 @@ const AddJob = () => {
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
-                </div>
-                <div className="flex flex-col gap-2 mb-4">
-                  <label htmlFor="sections" className="text-sm font-medium">
-                    Must ask
-                  </label>
-                  <input
-                    type="text"
-                    id="section_description"
-                    name="section_description"
-                    className="border rounded p-2"
-                    required
-                  />
                 </div>
                 {/* Tag Selector for Section Descriptions */}
                 <div className="flex flex-col gap-2 mb-4">
