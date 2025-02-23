@@ -25,7 +25,13 @@ interface Applicant {
   linkedin_url: string | null;
   portfolio_url: string | null;
   github_url: string | null;
-  status: "pending" | "reviewing" | "accepted" | "rejected" | "interviewed";
+  status:
+    | "pending"
+    | "reviewing"
+    | "accepted"
+    | "rejected"
+    | "interviewed"
+    | "interviewing";
   created_at: string;
   job: {
     job_name: string;
@@ -74,7 +80,7 @@ const ApplicantsTable = () => {
       )
       .order("created_at", { ascending: false });
 
-      console.log("Fetched applicants:", data);
+    console.log("Fetched applicants:", data);
 
     if (error) {
       setError(error);
@@ -109,50 +115,55 @@ const ApplicantsTable = () => {
 
   // Apply filters
   // Inside the filteredApplicants filter:
-const filteredApplicants = applicants.filter((applicant) => {
-  const jobName = applicant.job?.job_name.toLowerCase() || "";
-  const candidateName = `${applicant.first_name} ${applicant.last_name}`.toLowerCase();
-  const statusText = applicant.status.toLowerCase();
+  const filteredApplicants = applicants.filter((applicant) => {
+    const jobName = applicant.job?.job_name.toLowerCase() || "";
+    const candidateName =
+      `${applicant.first_name} ${applicant.last_name}`.toLowerCase();
+    const statusText = applicant.status.toLowerCase();
 
-  // Extract transcript text:
-  let transcriptText = "";
-  if (applicant.interview?.transcript) {
-    const rawTranscript = applicant.interview.transcript.trim();
-    // If transcript appears to be JSON (starts with '['), try parsing it:
-    if (rawTranscript.startsWith("[")) {
-      try {
-        const transcriptJSON = JSON.parse(rawTranscript);
-        if (Array.isArray(transcriptJSON)) {
-          transcriptText = transcriptJSON.map((entry: { message: string }) => entry.message).join(" ");
-        } else {
-          transcriptText = String(transcriptJSON);
+    // Extract transcript text:
+    let transcriptText = "";
+    if (applicant.interview?.transcript) {
+      const rawTranscript = applicant.interview.transcript.trim();
+      // If transcript appears to be JSON (starts with '['), try parsing it:
+      if (rawTranscript.startsWith("[")) {
+        try {
+          const transcriptJSON = JSON.parse(rawTranscript);
+          if (Array.isArray(transcriptJSON)) {
+            transcriptText = transcriptJSON
+              .map((entry: { message: string }) => entry.message)
+              .join(" ");
+          } else {
+            transcriptText = String(transcriptJSON);
+          }
+        } catch (error) {
+          console.error("Error parsing transcript JSON:", error);
+          transcriptText = rawTranscript; // fallback to raw text if JSON parsing fails
         }
-      } catch (error) {
-        console.error("Error parsing transcript JSON:", error);
-        transcriptText = rawTranscript; // fallback to raw text if JSON parsing fails
+      } else {
+        // Treat it as a plain text large string
+        transcriptText = rawTranscript;
       }
-    } else {
-      // Treat it as a plain text large string
-      transcriptText = rawTranscript;
+      transcriptText = transcriptText.toLowerCase();
     }
-    transcriptText = transcriptText.toLowerCase();
-  }
 
-  const global = globalFilter.toLowerCase();
-  console.log("Global filter:", transcriptText);
-  const matchGlobal =
-    !global ||
-    jobName.includes(global) ||
-    candidateName.includes(global) ||
-    statusText.includes(global) ||
-    transcriptText.includes(global);
+    const global = globalFilter.toLowerCase();
+    console.log("Global filter:", transcriptText);
+    const matchGlobal =
+      !global ||
+      jobName.includes(global) ||
+      candidateName.includes(global) ||
+      statusText.includes(global) ||
+      transcriptText.includes(global);
 
-  const matchJob = jobName.includes(jobFilter.toLowerCase());
-  const matchCandidate = candidateName.includes(candidateFilter.toLowerCase());
-  const matchStatus = statusText.includes(statusFilter.toLowerCase());
+    const matchJob = jobName.includes(jobFilter.toLowerCase());
+    const matchCandidate = candidateName.includes(
+      candidateFilter.toLowerCase()
+    );
+    const matchStatus = statusText.includes(statusFilter.toLowerCase());
 
-  return matchGlobal && matchJob && matchCandidate && matchStatus;
-});
+    return matchGlobal && matchJob && matchCandidate && matchStatus;
+  });
 
   return (
     <>
@@ -342,6 +353,7 @@ const filteredApplicants = applicants.filter((applicant) => {
                         accepted: "bg-green-100 text-green-800",
                         rejected: "bg-red-100 text-red-800",
                         interviewed: "bg-purple-100 text-purple-800",
+                        interviewing: "bg-indigo-100 text-indigo-800",
                       }[applicant.status]
                     }`}
                   >
