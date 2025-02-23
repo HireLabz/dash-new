@@ -21,6 +21,7 @@ export default function JobForm() {
   const [linkedin, setLinkedin] = useState("");
   const [portfolio, setPortfolio] = useState("");
   const [github, setGithub] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -92,11 +93,8 @@ export default function JobForm() {
         linkedin_url: linkedin,
         portfolio_url: portfolio,
         github_url: github,
+        phoneNumber: phoneNumber,
       };
-
-      const queryParams = new URLSearchParams(
-        paramsObj as Record<string, string>
-      ).toString();
 
       const response = await fetch(
         `https://23a1-142-154-212-250.ngrok-free.app/api/applications`,
@@ -110,6 +108,7 @@ export default function JobForm() {
             first_name: firstName,
             last_name: lastName,
             email: email,
+            phone_number: phoneNumber,
             resume_url: resumeUrl,
             linkedin_url: linkedin,
             portfolio_url: portfolio,
@@ -273,6 +272,8 @@ export default function JobForm() {
                 </label>
                 <input
                   type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="123-456-7890"
                   disabled={submitLoading}
                   className="w-full px-3 py-2 border rounded"
